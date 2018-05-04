@@ -1,0 +1,25 @@
+environment:
+  matrix:
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python33"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
+
+install:
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - pip install virtualenv
+  - virtualenv --clear venv
+  - "venv\\Scripts\\activate.bat"
+  - pip install coverage
+  - pip install -U calmjs
+  - python setup.py develop
+
+test_script:
+  - coverage run --include=src\* -m unittest calmjs.sassy.tests.make_suite
+  - coverage report -m
+
+artifacts:
+  - path: dist\*
+
+build: off
