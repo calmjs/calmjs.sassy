@@ -65,7 +65,7 @@ setup(
     },
     entry_points={
         'calmjs.registry': [
-            # 'calmjs.scss = calmjs.sassy.registry:SCSSRegistry',
+            'calmjs.scss = calmjs.sassy.registry:SCSSRegistry',
         ],
         'calmjs.runtime': [
             # 'sass = calmjs.sassy.runtime:default',
