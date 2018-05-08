@@ -59,16 +59,24 @@ setup(
     zip_safe=False,
     install_requires=[
         'libsass',
-        'calmjs>=3.0.0',
+        'calmjs>=3.2.0dev',
     ],
     extras_require={
     },
+    calmjs_scss_module_registry=['calmjs.scss'],
     entry_points={
         'calmjs.registry': [
             'calmjs.scss = calmjs.sassy.registry:SCSSRegistry',
         ],
         'calmjs.runtime': [
             # 'sass = calmjs.sassy.runtime:default',
+        ],
+        'distutils.setup_keywords': [
+            'calmjs_scss_module_registry = calmjs.dist:validate_line_list',
+        ],
+        'egg_info.writers': [
+            ('calmjs_scss_module_registry.txt = '
+                'calmjs.sassy.dist:write_module_registry_names'),
         ],
     },
     # test_suite="calmjs.sassy.tests.make_suite",
