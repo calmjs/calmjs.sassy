@@ -73,8 +73,11 @@ setup(
         ],
         'distutils.setup_keywords': [
             'calmjs_scss_module_registry = calmjs.dist:validate_line_list',
+            'extras_calmjs_scss = calmjs.dist:validate_json_field',
         ],
         'egg_info.writers': [
+            ('extras_calmjs_scss.json = '
+                'calmjs.sassy.dist:write_extras_calmjs_scss'),
             ('calmjs_scss_module_registry.txt = '
                 'calmjs.sassy.dist:write_module_registry_names'),
         ],
