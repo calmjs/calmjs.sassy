@@ -5,6 +5,7 @@ Toolchain for building Sassy CSS into CSS.
 
 from __future__ import unicode_literals
 
+import logging
 from os.path import join
 
 try:
@@ -20,6 +21,8 @@ from calmjs.toolchain import BUILD_DIR
 from calmjs.toolchain import EXPORT_TARGET
 
 from calmjs.sassy.exc import CalmjsSassyRuntimeError
+
+logger = logging.getLogger(__name__)
 
 # spec keys
 CALMJS_SCSS_MODULE_REGISTRY_NAMES = 'calmjs_scss_module_registry_names'
@@ -79,6 +82,9 @@ class BaseScssToolchain(Toolchain):
         with open(spec[CALMJS_SCSS_ENTRY_POINT_SOURCE], 'w') as fd:
             for modname in spec[CALMJS_SCSS_ENTRY_POINTS]:
                 fd.write('@import "%s";\n' % modname)
+        logger.debug(
+            "wrote entry point module that will import from the following: %s",
+            spec[CALMJS_SCSS_ENTRY_POINTS])
 
 
 class LibsassToolchain(BaseScssToolchain):
@@ -99,6 +105,9 @@ class LibsassToolchain(BaseScssToolchain):
         with open(spec[CALMJS_SCSS_ENTRY_POINT_SOURCE]) as fd:
             source = fd.read()
 
+        logger.info(
+            "invoking 'sass.compile' on entry point module at %r",
+            spec[BUILD_DIR])
         try:
             css_export = sass.compile(
                 string=source, include_paths=[spec[BUILD_DIR]])
@@ -109,3 +118,4 @@ class LibsassToolchain(BaseScssToolchain):
 
         with open(spec[EXPORT_TARGET], 'w') as fd:
             fd.write(css_export)
+        logger.info("wrote export css file at '%s'", spec[EXPORT_TARGET])

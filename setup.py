@@ -69,7 +69,7 @@ setup(
             'calmjs.scss = calmjs.sassy.registry:SCSSRegistry',
         ],
         'calmjs.runtime': [
-            # 'sass = calmjs.sassy.runtime:default',
+            'scss = calmjs.sassy.runtime:libsass_runtime',
         ],
         'distutils.setup_keywords': [
             'calmjs_scss_module_registry = calmjs.dist:validate_line_list',

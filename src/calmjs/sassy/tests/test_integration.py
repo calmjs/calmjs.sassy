@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import unittest
 import os
+import sys
 from os.path import exists
 from os.path import join
 
@@ -12,10 +13,12 @@ from calmjs.toolchain import Spec
 from calmjs.sassy import toolchain
 from calmjs.sassy.cli import compile_all
 from calmjs.sassy import exc
+from calmjs.sassy.runtime import libsass_runtime
 
 from calmjs.testing.mocks import StringIO
 from calmjs.testing.utils import mkdtemp
 from calmjs.testing.utils import remember_cwd
+from calmjs.testing.utils import stub_stdouts
 from calmjs.sassy.testing.utils import setup_class_integration_environment
 from calmjs.sassy.testing.utils import teardown_class_integration_environment
 
