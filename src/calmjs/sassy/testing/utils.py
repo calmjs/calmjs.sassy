@@ -73,6 +73,8 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
     utils.make_dummy_dist(None, (
         ('requires.txt', 'example.package'),
         ('entry_points.txt', (
+            '[calmjs.artifacts]\n'
+            'styles.css = calmjs.sassy.artifact:complete_css\n'
             '[%s]\n'
             'example.usage = example.usage\n' % cls.registry_name
         )),
@@ -108,6 +110,7 @@ def teardown_class_integration_environment(cls):
     from calmjs import dist as calmjs_dist
 
     _inst.records.pop(cls.registry_name, None)
+    _inst.records.pop('calmjs.artifacts', None)
     utils.rmtree(cls.dist_dir)
     calmjs_dist.default_working_set = cls.root_working_set
     base.working_set = cls.root_working_set

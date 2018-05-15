@@ -9,6 +9,8 @@ from os.path import join
 
 from calmjs.utils import pretty_logging
 from calmjs.toolchain import Spec
+from calmjs.runtime import main
+from calmjs.registry import get as get_registry
 
 from calmjs.sassy import toolchain
 from calmjs.sassy.cli import compile_all
@@ -244,3 +246,18 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         with open(spec['export_target']) as fd:
             self.assertEqual(
                 'body {\n  background-color: #f00; }\n', fd.read())
+
+    def test_artifact_runtime_entry_point_integration(self):
+        stub_stdouts(self)
+        registry = get_registry('calmjs.artifacts')
+        builders = list(registry.iter_builders_for('example.usage'))
+        for e, t, spec in builders:
+            self.assertFalse(exists(spec['export_target']))
+
+        self.assertEqual(1, len(builders))
+        with self.assertRaises(SystemExit) as e:
+            main(['artifact', 'build', 'example.usage'])
+
+        self.assertEqual(e.exception.args[0], 0)
+        for e, t, spec in builders:
+            self.assertTrue(exists(spec['export_target']))
