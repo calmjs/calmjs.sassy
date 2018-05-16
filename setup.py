@@ -59,7 +59,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'libsass',
-        'calmjs>=3.2.0dev',
+        'calmjs>=3.2.0',
     ],
     extras_require={
     },
