@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
 from os import makedirs
 from os.path import join
 
 from pkg_resources import get_distribution
 from pkg_resources import WorkingSet
 
+from calmjs.registry import _inst as root_registry
 from calmjs.registry import get as get_registry
 from calmjs.testing import utils
 from calmjs import dist as calmjs_dist
@@ -14,7 +16,6 @@ from calmjs import dist as calmjs_dist
 
 def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
     from calmjs import base
-
     cls.registry_name = registry_name
     cls.dist_dir = utils.mkdtemp_realpath()
     # fake node_modules for transpiled sources
@@ -39,7 +40,7 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
     # a dummy scss source from "node_modules"
     mockstrap = join(cls._nm_root, 'mockstrap.scss')
     with open(mockstrap, 'w') as fd:
-        fd.write('')
+        fd.write('.mockstrap { color: #f00; }')
 
     # JavaScript import/module names to filesystem path.
     # Normally, these are supplied through the calmjs setuptools
@@ -68,7 +69,13 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
     usage_index_scss = join(cls._ep_usage, 'index.scss')
     with open(usage_index_scss, 'w') as fd:
         fd.write('@import "example/package/colors";\n')
+        fd.write('@import "example/usage/extras";\n')
         fd.write('body { color: $theme_color; }\n')
+
+    # for further dependency testing
+    usage_extras_scss = join(cls._ep_usage, 'extras.scss')
+    with open(usage_extras_scss, 'w') as fd:
+        fd.write('h1 { font-weight: bold; }\n')
 
     utils.make_dummy_dist(None, (
         ('requires.txt', 'example.package'),
@@ -79,6 +86,35 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
             'example.usage = example.usage\n' % cls.registry_name
         )),
     ), 'example.usage', '1.0', working_dir=cls.dist_dir)
+
+    # one more package, for an attempt at slim explicit testing.
+    cls._ep_slim = join(cls.dist_dir, 'example', 'slim')
+    makedirs(cls._ep_slim)
+
+    # for testing loading of data provided by external sources that may
+    # be safely stubbed out
+    slim_index_scss = join(cls._ep_slim, 'index.scss')
+    with open(slim_index_scss, 'w') as fd:
+        fd.write('@import "mockstrap";\n')
+        fd.write('@import "example/usage/extras";\n')
+        fd.write('body { font-weight: lighter; }\n')
+
+    utils.make_dummy_dist(None, (
+        ('requires.txt', 'example.usage'),
+        ('extras_calmjs_scss.json', json.dumps({
+            "fake_modules": {
+                "mockstrap": "mockstrap.scss",
+            }
+        })),
+        ('entry_points.txt', (
+            '[calmjs.extras_keys]\n'
+            'fake_modules = enabled\n'
+            '[calmjs.artifacts]\n'
+            'styles.css = calmjs.sassy.artifact:complete_css\n'
+            '[%s]\n'
+            'example.slim = example.slim\n' % cls.registry_name
+        )),
+    ), 'example.slim', '1.0', working_dir=cls.dist_dir)
 
     # finally, include the entry_point information for calmjs.sassy
     # to ensure correct function of certain default registries.
@@ -94,6 +130,9 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
         calmjs_dist.default_working_set, working_set)
     base.working_set = working_set
 
+    # pop out the modified registries
+    root_registry.records.pop('calmjs.extras_keys', None)
+
     # manual registry creation
     registry = get_registry(cls.registry_name)
     registry.package_module_map['example.package'] = ['example.package']
@@ -101,16 +140,21 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
     registry.package_module_map['example.usage'] = ['example.usage']
     registry.records['example.usage'] = {
         'example/usage/index': usage_index_scss,
+        'example/usage/extras': usage_extras_scss,
+    }
+    registry.package_module_map['example.slim'] = ['example.slim']
+    registry.records['example.slim'] = {
+        'example/slim/index': slim_index_scss,
     }
 
 
 def teardown_class_integration_environment(cls):
-    from calmjs.registry import _inst
     from calmjs import base
     from calmjs import dist as calmjs_dist
 
-    _inst.records.pop(cls.registry_name, None)
-    _inst.records.pop('calmjs.artifacts', None)
+    root_registry.records.pop(cls.registry_name, None)
+    root_registry.records.pop('calmjs.artifacts', None)
+    root_registry.records.pop('calmjs.extras_keys', None)
     utils.rmtree(cls.dist_dir)
     calmjs_dist.default_working_set = cls.root_working_set
     base.working_set = cls.root_working_set

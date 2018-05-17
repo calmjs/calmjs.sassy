@@ -19,6 +19,7 @@ from calmjs.toolchain import Toolchain
 from calmjs.toolchain import null_transpiler
 from calmjs.toolchain import BUILD_DIR
 from calmjs.toolchain import EXPORT_TARGET
+from calmjs.toolchain import EXPORT_MODULE_NAMES
 
 from calmjs.sassy.exc import CalmjsSassyRuntimeError
 
@@ -28,6 +29,8 @@ logger = logging.getLogger(__name__)
 CALMJS_SCSS_MODULE_REGISTRY_NAMES = 'calmjs_scss_module_registry_names'
 CALMJS_SCSS_ENTRY_POINTS = 'calmjs_scss_entry_points'
 CALMJS_SCSS_ENTRY_POINT_SOURCE = 'calmjs_scss_entry_point_source'
+CALMJS_LIBSASS_IMPORTERS = 'calmjs_libsass_importers'
+SOURCEPATH_MERGED = 'sourcepath_merged'
 
 # definitions
 CALMJS_SCSS_ENTRY_POINT_NAME = 'calmjs.sassy.scss'
@@ -110,7 +113,10 @@ class LibsassToolchain(BaseScssToolchain):
             spec[BUILD_DIR])
         try:
             css_export = sass.compile(
-                string=source, include_paths=[spec[BUILD_DIR]])
+                string=source,
+                importers=spec.get(CALMJS_LIBSASS_IMPORTERS, ()),
+                include_paths=[spec[BUILD_DIR]],
+            )
         except ValueError:
             # assume this is the case, could/should be sass.CompileError
             # TODO figure out a better way to represent errors
@@ -119,3 +125,40 @@ class LibsassToolchain(BaseScssToolchain):
         with open(spec[EXPORT_TARGET], 'w') as fd:
             fd.write(css_export)
         logger.info("wrote export css file at '%s'", spec[EXPORT_TARGET])
+
+
+def libsass_import_stub_generator(spec):
+    """
+    Could be a standalone function with a partial applied, but because
+    Python 2 is broken this pre-wrapped function is needed
+
+    See: <https://bugs.python.org/issue3445>
+    """
+
+    def importer(target):
+        """
+        Attempt to find the relevant import and stub it out.
+        """
+
+        if target in spec[EXPORT_MODULE_NAMES]:
+            return None
+
+        if target in spec[SOURCEPATH_MERGED]:
+            return ((target, ''),)
+
+        # only the / separator is handled as this is typically generated and
+        # provided by node_modules or other JavaScript based module systems.
+        frags = target.split('/')[:-1]
+        while frags:
+            stub = '/'.join(frags)
+            if stub in spec[SOURCEPATH_MERGED]:
+                logger.info(
+                    "generating stub import for '%s'; provided by '%s'",
+                    target, stub,
+                )
+                return ((target, ''),)
+            frags.pop()
+
+        return None
+
+    return importer

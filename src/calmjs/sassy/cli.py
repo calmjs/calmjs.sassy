@@ -3,6 +3,7 @@
 Lower level API for creating linkage with an scss implementation.
 """
 
+from itertools import chain
 from os.path import basename
 from os.path import join
 from os.path import realpath
@@ -16,9 +17,12 @@ from calmjs.toolchain import SOURCE_PACKAGE_NAMES
 from calmjs.toolchain import WORKING_DIR
 from calmjs.toolchain import spec_update_sourcepath_filter_loaderplugins
 
+from calmjs.sassy.toolchain import libsass_import_stub_generator
 from calmjs.sassy.toolchain import LibsassToolchain
 from calmjs.sassy.toolchain import CALMJS_SCSS_MODULE_REGISTRY_NAMES
 from calmjs.sassy.toolchain import CALMJS_SCSS_ENTRY_POINTS
+from calmjs.sassy.toolchain import SOURCEPATH_MERGED
+from calmjs.sassy.toolchain import CALMJS_LIBSASS_IMPORTERS
 
 from calmjs.sassy.dist import generate_scss_sourcepaths
 from calmjs.sassy.dist import generate_scss_bundle_sourcepaths
@@ -180,6 +184,28 @@ def create_spec(
             working_dir=working_dir,
             method=bundlepath_method,
         ), 'bundle_sourcepath')
+
+    # build the stub importer, if applicable for stubbing out external
+    # imports for non-all definitions
+    # need one that merges all sources for sourcepaths
+    spec[SOURCEPATH_MERGED] = {}
+    if sourcepath_method != 'all':
+        spec[SOURCEPATH_MERGED].update(generate_scss_sourcepaths(
+            package_names=package_names,
+            registries=source_registries,
+            method='all',
+        ))
+    if bundlepath_method != 'all':
+        spec[SOURCEPATH_MERGED].update(generate_scss_bundle_sourcepaths(
+            package_names=package_names,
+            working_dir=working_dir,
+            method='all',
+        ))
+    if spec[SOURCEPATH_MERGED]:
+        spec[CALMJS_LIBSASS_IMPORTERS] = list(chain(
+            spec.get(CALMJS_LIBSASS_IMPORTERS, []),
+            [(0, libsass_import_stub_generator(spec))],
+        ))
 
     if calmjs_scss_entry_points:
         spec[CALMJS_SCSS_ENTRY_POINTS] = calmjs_scss_entry_points

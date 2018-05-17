@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import unittest
 import os
 import sys
+from textwrap import dedent
 from os.path import exists
 from os.path import join
 
@@ -226,7 +227,67 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         self.assertIn("'example/usage/index'] as entry points for css", log)
 
         with open(spec['export_target']) as fd:
-            self.assertEqual('body {\n  color: #f00; }\n', fd.read())
+            self.assertEqual(dedent('''
+            h1 {
+              font-weight: bold; }
+
+            body {
+              color: #f00; }
+            ''').lstrip(), fd.read())
+
+    def test_slim_with_index_dependencies(self):
+        remember_cwd(self)
+        # using the dist_dir as that's where the fake_modules is located
+        os.chdir(self.dist_dir)
+
+        with pretty_logging(stream=StringIO()):
+            spec = compile_all(['example.slim'])
+
+        with open(spec['export_target']) as fd:
+            self.assertEqual(dedent('''
+            .mockstrap {
+              color: #f00; }
+
+            h1 {
+              font-weight: bold; }
+
+            body {
+              font-weight: lighter; }
+            ''').lstrip(), fd.read())
+
+    def test_slim_explicit_sourcepath(self):
+        remember_cwd(self)
+        os.chdir(self.dist_dir)
+
+        with pretty_logging(stream=StringIO()):
+            spec = compile_all(['example.slim'], sourcepath_method='explicit')
+
+        with open(spec['export_target']) as fd:
+            # the main section is not included
+            self.assertEqual(dedent('''
+            .mockstrap {
+              color: #f00; }
+
+            body {
+              font-weight: lighter; }
+            ''').lstrip(), fd.read())
+
+    def test_slim_no_bundlepath(self):
+        remember_cwd(self)
+        os.chdir(self.dist_dir)
+
+        with pretty_logging(stream=StringIO()):
+            spec = compile_all(['example.slim'], bundlepath_method='none')
+
+        with open(spec['export_target']) as fd:
+            # the main section is not included
+            self.assertEqual(dedent('''
+            h1 {
+              font-weight: bold; }
+
+            body {
+              font-weight: lighter; }
+            ''').lstrip(), fd.read())
 
     def test_runtime_integration_successful(self):
         """
