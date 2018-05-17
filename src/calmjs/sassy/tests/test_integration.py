@@ -289,15 +289,26 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
               font-weight: lighter; }
             ''').lstrip(), fd.read())
 
+    def test_usage_all_explicit_fail(self):
+        remember_cwd(self)
+        os.chdir(self.dist_dir)
+        with pretty_logging(stream=StringIO()):
+            with self.assertRaises(exc.CalmjsSassyRuntimeError):
+                compile_all(
+                    ['example.usage'], sourcepath_method='explicit',
+                    bundlepath_method='none',
+                )
+
     def test_runtime_integration_successful(self):
         """
         Test the runtime integration.
         """
 
         stub_stdouts(self)
-        remember_cwd(self)
-        os.chdir(mkdtemp(self))
-        spec = libsass_runtime(['example.package', '-vv'])
+        working_dir = mkdtemp(self)
+        spec = libsass_runtime([
+            'example.package', '-vv', '--working-dir', working_dir,
+        ])
         log = sys.stderr.getvalue().replace("u'", "'")
         self.assertIn(
             "DEBUG calmjs.sassy.toolchain wrote entry point module that will "
@@ -307,6 +318,19 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         with open(spec['export_target']) as fd:
             self.assertEqual(
                 'body {\n  background-color: #f00; }\n', fd.read())
+
+    def test_runtime_integration_failure(self):
+        stub_stdouts(self)
+        working_dir = mkdtemp(self)
+        # Test that explicit is not going to work because it has a hard
+        # dependency
+        libsass_runtime([
+            'example.usage', '-vvd', '--working-dir', working_dir,
+            '--sourcepath-method=explicit',
+        ])
+        log = sys.stderr.getvalue().replace("u'", "'")
+        self.assertIn("CRITICAL", log)
+        self.assertIn('Undefined variable: "$theme-color".', log)
 
     def test_artifact_runtime_entry_point_integration(self):
         stub_stdouts(self)

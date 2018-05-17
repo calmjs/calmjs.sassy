@@ -117,10 +117,11 @@ class LibsassToolchain(BaseScssToolchain):
                 importers=spec.get(CALMJS_LIBSASS_IMPORTERS, ()),
                 include_paths=[spec[BUILD_DIR]],
             )
-        except ValueError:
+        except ValueError as e:
             # assume this is the case, could/should be sass.CompileError
             # TODO figure out a better way to represent errors
-            raise CalmjsSassyRuntimeError('failed to compile with libsass')
+            raise CalmjsSassyRuntimeError(
+                'failed to compile with libsass: %s' % e)
 
         with open(spec[EXPORT_TARGET], 'w') as fd:
             fd.write(css_export)
