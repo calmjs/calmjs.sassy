@@ -1,14 +1,14 @@
 calmjs.sassy
 ============
 
-Package for extending the `Calmjs framework`_ to support the usage of
-|sass|_ in a manner that crosses Python package boundaries by exposing
-an  ``import`` system that mimics the package namespaces available
-within the current Python environment, such that styling rules can be
-more easily propagated to their dependants.  This facilitates the reuse
-of styling rules declared by Python packages' dependencies in a manner
-more familiar to users of the given Python environments by reusing the
-same names as the namespaces they may be using.
+Package for extending the `Calmjs framework`_ to support the declaration
+and usage of |sass|_ in a manner that crosses Python package boundaries
+by exposing an ``import`` system that mimics the package namespaces
+available within the current Python environment, such that styling rules
+can be more easily propagated to their dependants.  This facilitates the
+reuse of styling rules declared by Python packages' dependencies in a
+manner more familiar to users of the given Python environments by
+reusing the same names as the namespaces they may be using.
 
 .. image:: https://travis-ci.org/calmjs/calmjs.sassy.svg?branch=master
     :target: https://travis-ci.org/calmjs/calmjs.sassy
@@ -18,35 +18,85 @@ same names as the namespaces they may be using.
     :target: https://coveralls.io/github/calmjs/calmjs.sassy?branch=master
 
 .. |calmjs| replace:: ``calmjs``
+.. |calmjs.rjs| replace:: ``calmjs.rjs``
 .. |calmjs.sassy| replace:: ``calmjs.sassy``
+.. |calmjs.webpack| replace:: ``calmjs.webpack``
+.. |libsass-python| replace:: ``libsass-python``
+.. |npm| replace:: ``npm``
 .. |sass| replace:: ``sass``
 .. _Calmjs framework: https://pypi.python.org/pypi/calmjs
 .. _calmjs: https://pypi.python.org/pypi/calmjs
+.. _calmjs.rjs: https://pypi.python.org/pypi/calmjs.rjs
+.. _calmjs.webpack: https://pypi.python.org/pypi/calmjs.webpack
+.. _libsass-python: https://sass.github.io/libsass-python/
+.. _npm: https://www.npmjs.com/
 .. _sass: https://sass-lang.com/
 
 Introduction
 ------------
 
-TODO to be written
+While the |calmjs|_ framework can support the production of deployable
+artifacts for web applications (through packages such as |calmjs.rjs|
+and |calmjs.webpack|), the styling of the application would be
+incomplete without exposing the relevant stylesheets to dependant
+packages.
+
+With the usage of the extensibility of the calmjs framework, a registry
+dedicated for |sass| may be declared.  Tools that make use of these
+declarations may also be integrated to generate a single (or a set of)
+stylesheets for use with the library or the application.
+
 
 Features
 --------
 
-How |calmjs.sassy| works
-~~~~~~~~~~~~~~~~~~~~~~~~
+This package provides:
 
-TODO to be written
+- A base registry that finds all ``.scss`` files declared in a Python
+  package.
+- A basic toolchain for linking all the ``.scss`` files exported by a
+  given Python package(s) and their dependencies, plus optionally their
+  Node.js/npm dependencies discovered through the dependency graph with
+  the aid of |calmjs|_, for the generation of ``.css`` files for use by
+  the application or export to other libraries.  A specific
+  implementation that links against |libsass-python|_ is provided.
+- A calmjs runtime that makes use of the |libsass-python| toolchain for
+  end-user one-off CSS generation.
 
 
 Installation
 ------------
 
-When this package is officially released, the following may be done; for
-now please continue onto the alternative installation method.
+To install |calmjs.sassy| into a given Python environment, the base
+package may be installed directly from PyPI with the following command:
 
 .. code:: sh
 
     $ pip install calmjs.sassy
+
+If support for the usage of |libsass-python| is desired, the
+installation command will be the following:
+
+.. code:: sh
+
+    $ pip install calmjs.sassy[libsass]
+
+If this package is used as part of the build process, and the default
+|libsass-python| toolchain is used for CSS artifact generation, the
+dependency may be declared like so in the package's ``setup.py`` file:
+
+.. code:: python
+
+    setup(
+        ...
+        setup_requires=[
+            'calmjs.sassy>=1.0.0,<2',
+            # plus other packages required for generating the package.
+        ],
+        install_requires=[
+            # actual dependencies required for the usage of the package.
+        ],
+    )
 
 Alternative installation methods (advanced users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,15 +110,17 @@ version may be installed through git like so:
     $ pip install git+https://github.com/calmjs/calmjs.sassy.git#egg=calmjs.sassy
 
 Alternatively, the git repository can be cloned directly and execute
-``python setup.py develop`` while inside the root of the source
-directory.
+``pip install -e .`` while inside the root of the source directory.
 
-Keep in mind that |calmjs| MUST be available before the ``setup.py``
-within the |calmjs.sassy| source tree is executed, for it needs the
-``package_json`` writing capabilities in |calmjs|.  Alternatively,
-please execute ``python setup.py egg_info`` if any message about
-``Unknown distribution option:`` is noted during the invocation of
-``setup.py``.
+Newer versions of ``pip`` and ``setuptools`` may omit the initial manual
+installation of the |calmjs| package.
+
+If ``setup.py`` within the |calmjs.sassy| source tree is used directly,
+please keep in mind that |calmjs| MUST be available before that is
+executed, so that all the required package metadata may be generated
+correctly.  Alternatively, please execute ``python setup.py egg_info``
+if any message about ``Unknown distribution option:`` is noted during
+the invocation of ``setup.py``.
 
 As |calmjs| is declared as both namespace and package, there are certain
 low-level setup that is required on the working Python environment to
@@ -108,11 +160,26 @@ the included tests may be executed through this command:
 
     $ python -m unittest calmjs.sassy.tests.make_suite
 
+
 Usage
 -----
 
-TODO build this feature
+To generate the ``.css`` artifact for given package(s) that have
+exported ``.scss`` styles through the Calmjs module registry system, and
+that the package |libsass-python| is available, the following command
+may be executed:
 
+.. code:: sh
+
+    $ calmjs scss example.package
+
+The following sections will provide an overview on how this export
+system may be enabled for Python packages.  For a more detailed
+explanation on how the module registry works or how Calmjs works in
+general, please refer to the README provided by the |calmjs|_ package,
+under the section `Export JavaScript code from Python packages`__.
+
+.. __: https://pypi.python.org/pypi/calmjs/#export-javascript-code-from-python-packages
 
 Declaring SCSS files to export for a given Python package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,12 +213,10 @@ registry will present them using the CommonJS/ES6 style import paths
 those style rules need to be ensure that they ``import`` those strings.
 
 Please also note that the default source extractor will extract all
-``*.scss`` files within those directories.  Finally, as a consequence of
-how the imports are done, it is recommended that no relative imports are
-to be used.
+``*.scss`` files within those directories.
 
-Putting this together, the ``setup.py`` file should contain the
-following:
+Putting the second example together, the ``setup.py`` file should
+contain the following:
 
 .. code:: Python
 
@@ -169,6 +234,112 @@ following:
         """,
     )
 
+Ensuring the CSS is structured in the supported manner for reuse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For proper generation of the resulting ``.css`` and the management of
+the ``.scss`` usage and exports, the default |libsass-python| toolchain
+imposes a small number of fixed constraints when default settings are
+used.  The main constraint is that only the ``index.scss`` is used per
+specified package(s) as the entry point(s) for the generation of the
+stylesheet artifact.  In essence, this allow the package to create an
+artifact with just the explicit imports and styling rules defined within
+it, while allowing their dependants to reuse certain styling rules that
+the package(s) may have declared in other ``.scss`` modules.  This
+allows a more minimum stylesheet to be generated for all packages that
+make use of this system.
+
+For example, inside an ``example.package`` there may be this layout::
+
+    .
+    ├── example
+    │   ├── __init__.py
+    │   └── package
+    │       ├── __init__.py
+    │       ├── colors.scss
+    │       ├── content.py
+    │       ├── form.py
+    │       ├── form.scss
+    │       ├── index.scss
+    │       ├── ui.py
+    │       ├── ui.scss
+    │       └── widget.js
+    └── setup.py
+
+Note that the ``index.scss`` for this package may contain the following:
+
+.. code:: css
+
+    @import "example/package/colors";
+    @import "example/package/form";
+    @import "example/package/ui";
+
+Which are simply imports of all the ``.scss`` modules provided by the
+package itself.  For a package that depends on ``example.package``, it
+may have an ``index.scss`` that contain the following:
+
+.. code:: css
+
+    @import "example/dependant/colors";
+    @import "example/dependant/full_ui";
+    @import "example/package/form";
+
+In the ``index.scss`` provided by the ``example.dependant`` package, it
+included only the ``form.scss`` exported by the ``example.package``,
+while omitting the inclusion of ``colors.scss`` and ``ui.scss`` as it
+could clash with the definitions required and implemented by the other
+styles it shipped.  Other dependants of this ``example.dependant``
+package may then declare usage of any of these exported styles as per
+their owners' preferences.  This is one method to provide extensible
+styles that are reusable in a piecemeal manner by package dependants.
+
+Naturally, there are parameters to specify entry points other than
+``index.scss`` for a given package, if necessary (for example, multiple
+stylesheets may need to be exported for use with different workflows
+provided by the given package).
+
+Include .scss files in Node.js package repositories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As the integration with Node.js was the goal of the Calmjs framework, it
+is possible to declare linkage with Node.js packages that ship with
+``.scss`` files from package repositories such as |npm|_.  The actual
+usage is very similar to the typical integration through Calmjs, where
+the difference lies in the keywords to be specified.
+
+For example, a ``setup.py`` may contain the following:
+
+.. code:: Python
+
+    setup(
+        name="example.package"
+        package_json={
+            "dependencies": {
+                "bootstrap": "~4.0.0",
+            },
+        },
+        extras_calmjs_scss={
+            'node_modules': {
+                'bootstrap': 'bootstrap/scss',
+            }
+        },
+    )
+
+The declaration above with simply expose all the ``.scss`` files inside
+the ``bootstrap`` package from ``npm`` as the directory was declared to
+be used for the build process.  Importing the desired module from that
+dependency is simply:
+
+.. code:: css
+
+    @import "bootstrap/nav";
+    @import "bootstrap/navbar";
+
+Would work seemlessly, much like the usage of JavaScript code.
+
+Complete artifacts from ``npm`` may also be explicitly specified to
+export under a specific identifier.
+
 Declaring prebuilt, standard CSS bundle for the Python package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -179,7 +350,7 @@ specifying an entry in the ``calmjs.artifacts`` registry, with the key
 being the filename of the artifact and the value being the import
 location to a builder.  A default builder function provided at
 ``calmjs.sassy.artifact:complete_css`` will enable the generation
-of a complete stylesheet:
+of a complete stylesheet, based on the default toolchain and settings:
 
 .. code:: ini
 
@@ -201,7 +372,7 @@ process.  Consider this ``setup.py``:
 
     setup(
         name='example.package',
-        # ... other required fields truncated
+        # to enable calmjs artifact generation integration w/ setuptools
         build_calmjs_artifacts=True,
         entry_points="""
         # ... other entry points truncated
@@ -211,6 +382,7 @@ process.  Consider this ``setup.py``:
         [calmjs.artifacts]
         example.bundle.css = calmjs.sassy.artifact:complete_css
         """,
+        # ... other required fields truncated
     )
 
 Building the wheel using ``setup.py`` may result in something like this.

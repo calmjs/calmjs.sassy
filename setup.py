@@ -58,10 +58,12 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'libsass',
         'calmjs>=3.2.0',
     ],
     extras_require={
+        'libsass': [
+            'libsass>=0.11.0',
+        ],
     },
     calmjs_scss_module_registry=['calmjs.scss'],
     entry_points={
