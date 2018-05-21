@@ -18,4 +18,4 @@ class RuntimeTestCase(unittest.TestCase):
         stub_stdouts(self)
         spec = runtime(['calmjs.scss', '--source-registries=demo'])
         self.assertTrue(isinstance(spec, Spec))
-        self.assertEqual(['demo'], spec['calmjs_scss_module_registry_names'])
+        self.assertEqual(['demo'], spec['calmjs_module_registry_names'])

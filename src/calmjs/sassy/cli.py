@@ -14,15 +14,15 @@ from calmjs.toolchain import Spec
 from calmjs.toolchain import BUILD_DIR
 from calmjs.toolchain import EXPORT_TARGET
 from calmjs.toolchain import SOURCE_PACKAGE_NAMES
+from calmjs.toolchain import CALMJS_MODULE_REGISTRY_NAMES
 from calmjs.toolchain import WORKING_DIR
 from calmjs.toolchain import spec_update_sourcepath_filter_loaderplugins
 
 from calmjs.sassy.toolchain import libsass_import_stub_generator
 from calmjs.sassy.toolchain import LibsassToolchain
-from calmjs.sassy.toolchain import CALMJS_SCSS_MODULE_REGISTRY_NAMES
-from calmjs.sassy.toolchain import CALMJS_SCSS_ENTRY_POINTS
-from calmjs.sassy.toolchain import SOURCEPATH_MERGED
-from calmjs.sassy.toolchain import CALMJS_LIBSASS_IMPORTERS
+from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINTS
+from calmjs.sassy.toolchain import CALMJS_SASSY_SOURCEPATH_MERGED
+from calmjs.sassy.toolchain import LIBSASS_IMPORTERS
 
 from calmjs.sassy.dist import generate_scss_sourcepaths
 from calmjs.sassy.dist import generate_scss_bundle_sourcepaths
@@ -38,7 +38,7 @@ def create_spec(
         source_registry_method='all', source_registries=None,
         sourcepath_method='all',
         bundlepath_method='all',
-        calmjs_scss_entry_points=None,
+        calmjs_sassy_entry_points=None,
         toolchain=libsass_toolchain,
         ):
     """
@@ -116,7 +116,7 @@ def create_spec(
 
         Defaults to 'all'.
 
-    calmjs_scss_entry_points
+    calmjs_sassy_entry_points
         The scss module names that will be used as the entry points to
         link the scss rules provided in the build directory.  If None
         are provided, the index.scss files provided by the input
@@ -166,7 +166,7 @@ def create_spec(
         )
 
     spec[BUILD_DIR] = build_dir
-    spec[CALMJS_SCSS_MODULE_REGISTRY_NAMES] = source_registries
+    spec[CALMJS_MODULE_REGISTRY_NAMES] = source_registries
     spec[EXPORT_TARGET] = export_target
     spec[SOURCE_PACKAGE_NAMES] = package_names
     spec[WORKING_DIR] = working_dir
@@ -188,30 +188,32 @@ def create_spec(
     # build the stub importer, if applicable for stubbing out external
     # imports for non-all definitions
     # need one that merges all sources for sourcepaths
-    spec[SOURCEPATH_MERGED] = {}
+    spec[CALMJS_SASSY_SOURCEPATH_MERGED] = {}
     if sourcepath_method != 'all':
-        spec[SOURCEPATH_MERGED].update(generate_scss_sourcepaths(
+        spec[CALMJS_SASSY_SOURCEPATH_MERGED].update(generate_scss_sourcepaths(
             package_names=package_names,
             registries=source_registries,
             method='all',
         ))
     if bundlepath_method != 'all':
-        spec[SOURCEPATH_MERGED].update(generate_scss_bundle_sourcepaths(
+        spec[
+            CALMJS_SASSY_SOURCEPATH_MERGED
+        ].update(generate_scss_bundle_sourcepaths(
             package_names=package_names,
             working_dir=working_dir,
             method='all',
         ))
-    if spec[SOURCEPATH_MERGED]:
-        spec[CALMJS_LIBSASS_IMPORTERS] = list(chain(
-            spec.get(CALMJS_LIBSASS_IMPORTERS, []),
+    if spec[CALMJS_SASSY_SOURCEPATH_MERGED]:
+        spec[LIBSASS_IMPORTERS] = list(chain(
+            spec.get(LIBSASS_IMPORTERS, []),
             [(0, libsass_import_stub_generator(spec))],
         ))
 
-    if calmjs_scss_entry_points:
-        spec[CALMJS_SCSS_ENTRY_POINTS] = calmjs_scss_entry_points
+    if calmjs_sassy_entry_points:
+        spec[CALMJS_SASSY_ENTRY_POINTS] = calmjs_sassy_entry_points
         logger.debug(
-            'using provided .scss targets %r as entry points for css '
-            'generation', calmjs_scss_entry_points,
+            "using provided targets %r as entry points for css "
+            "generation", calmjs_sassy_entry_points,
         )
     else:
         # There duplicates the above call, but this is done to avoid
@@ -219,7 +221,7 @@ def create_spec(
         # being used.  The goal is to find all index.scss which are
         # assumed to be the entry points for the styling rules defined
         # specific for this given package.
-        spec[CALMJS_SCSS_ENTRY_POINTS] = [
+        spec[CALMJS_SASSY_ENTRY_POINTS] = [
             modname for modname, sourcepath in generate_scss_sourcepaths(
                 package_names=package_names,
                 registries=source_registries,
@@ -228,7 +230,7 @@ def create_spec(
         ]
         logger.debug(
             'using derived .scss targets %r as entry points for css '
-            'generation', spec[CALMJS_SCSS_ENTRY_POINTS],
+            'generation', spec[CALMJS_SASSY_ENTRY_POINTS],
         )
 
     return spec
@@ -238,7 +240,7 @@ def compile_all(
         package_names, export_target=None, working_dir=None, build_dir=None,
         source_registry_method='all', source_registries=None,
         sourcepath_method='all', bundlepath_method='all',
-        calmjs_scss_entry_points=None,
+        calmjs_sassy_entry_points=None,
         toolchain=libsass_toolchain):
     """
     Invoke the scss compilation through the provided toolchain class to
@@ -267,7 +269,7 @@ def compile_all(
         source_registries=source_registries,
         sourcepath_method=sourcepath_method,
         bundlepath_method=bundlepath_method,
-        calmjs_scss_entry_points=calmjs_scss_entry_points,
+        calmjs_sassy_entry_points=calmjs_sassy_entry_points,
         toolchain=toolchain,
     )
     toolchain(spec)

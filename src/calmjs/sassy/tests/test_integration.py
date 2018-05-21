@@ -73,7 +73,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             bundle_sourcepath=bundle_sourcepath,
             export_target=export_target,
             build_dir=build_dir,
-            calmjs_scss_entry_points=('example/package/colors',),
+            calmjs_sassy_entry_points=('example/package/colors',),
         )
         libsass(spec)
         self.assertEqual({
@@ -108,7 +108,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             bundle_sourcepath=bundle_sourcepath,
             export_target=export_target,
             build_dir=build_dir,
-            calmjs_scss_entry_points=('example/package/index',),
+            calmjs_sassy_entry_points=('example/package/index',),
         )
         libsass(spec)
         self.assertEqual({
@@ -142,7 +142,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             bundle_sourcepath={},
             export_target=export_target,
             build_dir=build_dir,
-            calmjs_scss_entry_points=('example/package/malformed',),
+            calmjs_sassy_entry_points=('example/package/malformed',),
         )
         with self.assertRaises(exc.CalmjsSassyRuntimeError):
             libsass(spec)
@@ -197,12 +197,12 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         with pretty_logging(stream=StringIO()) as stream:
             spec = compile_all(
                 ['example.package'],
-                calmjs_scss_entry_points=['example/package/index'],
+                calmjs_sassy_entry_points=['example/package/index'],
             )
 
         self.assertTrue(exists(spec['export_target']))
         log = stream.getvalue()
-        self.assertIn('using provided .scss targets ', log)
+        self.assertIn('using provided targets ', log)
         self.assertIn("'example/package/index'] as entry points for css", log)
 
     def test_no_such_package(self):

@@ -36,7 +36,7 @@ class StubImporterTestCase(unittest.TestCase):
                 'example/slim/index',
                 'example/slim/common',
             ],
-            'sourcepath_merged': {
+            'calmjs_sassy_sourcepath_merged': {
                 'fakestrap': '/node_modules/fakestrap',
                 'example/slim/common': '/src/example/slim/common.scss',
                 'example/slim/index': '/src/example/slim/index.scss',

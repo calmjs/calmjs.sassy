@@ -26,14 +26,22 @@ from calmjs.sassy.exc import CalmjsSassyRuntimeError
 logger = logging.getLogger(__name__)
 
 # spec keys
-CALMJS_SCSS_MODULE_REGISTRY_NAMES = 'calmjs_scss_module_registry_names'
-CALMJS_SCSS_ENTRY_POINTS = 'calmjs_scss_entry_points'
-CALMJS_SCSS_ENTRY_POINT_SOURCE = 'calmjs_scss_entry_point_source'
-CALMJS_LIBSASS_IMPORTERS = 'calmjs_libsass_importers'
-SOURCEPATH_MERGED = 'sourcepath_merged'
+# the entry points to make use of for the current execution run through
+# a calmjs.sassy toolchain.
+CALMJS_SASSY_ENTRY_POINTS = 'calmjs_sassy_entry_points'
+# the location of the generated sourcefile that will reference the entry
+# points specified
+CALMJS_SASSY_ENTRY_POINT_SOURCEFILE = 'calmjs_sassy_entry_point_sourcefile'
+# the entry point name, typically this will be `index`
+CALMJS_SASSY_ENTRY_POINT_NAME = 'calmjs_sassy_entry_point_name'
+# key for storing mapping of all the provided sourcepaths, for use with
+# providing a control way of stubbing out imports.
+CALMJS_SASSY_SOURCEPATH_MERGED = 'calmjs_sassy_sourcepath_merged'
+# the importers for libsass.
+LIBSASS_IMPORTERS = 'libsass_importers'
 
 # definitions
-CALMJS_SCSS_ENTRY_POINT_NAME = 'calmjs.sassy.scss'
+CALMJS_SASSY_ENTRY = 'calmjs.sassy'
 
 
 class BaseScssToolchain(Toolchain):
@@ -77,17 +85,20 @@ class BaseScssToolchain(Toolchain):
         entry point to the styles should be specified here.
         """
 
-        spec[CALMJS_SCSS_ENTRY_POINT_SOURCE] = join(
-            spec[BUILD_DIR], CALMJS_SCSS_ENTRY_POINT_NAME)
+        spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE] = join(
+            spec[BUILD_DIR], spec.get(
+                CALMJS_SASSY_ENTRY_POINT_NAME, CALMJS_SASSY_ENTRY
+            )
+        ) + self.filename_suffix
 
         # writing out this as a file to permit reuse by other tools that
         # work directly with files.
-        with open(spec[CALMJS_SCSS_ENTRY_POINT_SOURCE], 'w') as fd:
-            for modname in spec[CALMJS_SCSS_ENTRY_POINTS]:
+        with open(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE], 'w') as fd:
+            for modname in spec[CALMJS_SASSY_ENTRY_POINTS]:
                 fd.write('@import "%s";\n' % modname)
         logger.debug(
             "wrote entry point module that will import from the following: %s",
-            spec[CALMJS_SCSS_ENTRY_POINTS])
+            spec[CALMJS_SASSY_ENTRY_POINTS])
 
 
 class LibsassToolchain(BaseScssToolchain):
@@ -105,7 +116,7 @@ class LibsassToolchain(BaseScssToolchain):
         # extension and debugging through the serialized form, also to
         # permit alternative integration with tools that read from a
         # file.
-        with open(spec[CALMJS_SCSS_ENTRY_POINT_SOURCE]) as fd:
+        with open(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]) as fd:
             source = fd.read()
 
         logger.info(
@@ -114,7 +125,7 @@ class LibsassToolchain(BaseScssToolchain):
         try:
             css_export = sass.compile(
                 string=source,
-                importers=spec.get(CALMJS_LIBSASS_IMPORTERS, ()),
+                importers=spec.get(LIBSASS_IMPORTERS, ()),
                 include_paths=[spec[BUILD_DIR]],
             )
         except ValueError as e:
@@ -144,7 +155,7 @@ def libsass_import_stub_generator(spec):
         if target in spec[EXPORT_MODULE_NAMES]:
             return None
 
-        if target in spec[SOURCEPATH_MERGED]:
+        if target in spec[CALMJS_SASSY_SOURCEPATH_MERGED]:
             return ((target, ''),)
 
         # only the / separator is handled as this is typically generated and
@@ -152,7 +163,7 @@ def libsass_import_stub_generator(spec):
         frags = target.split('/')[:-1]
         while frags:
             stub = '/'.join(frags)
-            if stub in spec[SOURCEPATH_MERGED]:
+            if stub in spec[CALMJS_SASSY_SOURCEPATH_MERGED]:
                 logger.info(
                     "generating stub import for '%s'; provided by '%s'",
                     target, stub,
