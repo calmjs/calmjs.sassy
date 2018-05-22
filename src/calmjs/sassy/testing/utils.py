@@ -82,6 +82,7 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
         ('entry_points.txt', (
             '[calmjs.artifacts]\n'
             'styles.css = calmjs.sassy.artifact:complete_css\n'
+            'styles.min.css = calmjs.sassy.artifact:complete_compressed_css\n'
             '[%s]\n'
             'example.usage = example.usage\n' % cls.registry_name
         )),
@@ -111,6 +112,7 @@ def setup_class_integration_environment(cls, registry_name='calmjs.scss'):
             'fake_modules = enabled\n'
             '[calmjs.artifacts]\n'
             'styles.css = calmjs.sassy.artifact:complete_css\n'
+            'styles.min.css = calmjs.sassy.artifact:complete_compressed_css\n'
             '[%s]\n'
             'example.slim = example.slim\n' % cls.registry_name
         )),

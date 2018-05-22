@@ -418,16 +418,32 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             self.assertEqual('h1 {\n  font-weight: bold; }\n', fd.read())
 
     def test_artifact_runtime_entry_point_integration(self):
+        # Note that this test causes irreversable side effects for the
+        # remainder of the test, as the egg-info artifact written is
+        # not cleaned up at the end as the artifacts are generated
+        # directly onto the class level test environment.
         stub_stdouts(self)
         registry = get_registry('calmjs.artifacts')
-        builders = list(registry.iter_builders_for('example.usage'))
+        builders = sorted(
+            registry.iter_builders_for('example.usage'),
+            key=lambda builder: str(builder[0])
+        )
         for e, t, spec in builders:
             self.assertFalse(exists(spec['export_target']))
 
-        self.assertEqual(1, len(builders))
+        self.assertEqual(2, len(builders))
         with self.assertRaises(SystemExit) as e:
             main(['artifact', 'build', 'example.usage'])
 
         self.assertEqual(e.exception.args[0], 0)
         for e, t, spec in builders:
             self.assertTrue(exists(spec['export_target']))
+
+        with open(builders[0][2]['export_target']) as fd:
+            # style.css
+            self.assertEqual('h1 {\n', fd.readline())
+
+        with open(builders[1][2]['export_target']) as fd:
+            # style.min.css
+            self.assertEqual(
+                'h1{font-weight:bold}body{color:red}\n', fd.readline())
