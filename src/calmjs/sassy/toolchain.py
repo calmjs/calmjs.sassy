@@ -127,7 +127,7 @@ class LibsassToolchain(BaseScssToolchain):
 
         logger.info(
             "invoking 'sass.compile' on entry point module at %r",
-            spec[BUILD_DIR])
+            spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE])
         try:
             css_export = sass.compile(
                 string=source,
