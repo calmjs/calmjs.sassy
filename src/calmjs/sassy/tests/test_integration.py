@@ -364,6 +364,17 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         self.assertIn("CRITICAL", log)
         self.assertIn('Undefined variable: "$theme-color".', log)
 
+    def test_runtime_explicit_entry_point_name(self):
+        stub_stdouts(self)
+        working_dir = mkdtemp(self)
+        spec = libsass_runtime([
+            'artifact', 'build', 'example.usage',
+            '--working-dir', working_dir,
+            '--entry-point-name=extras',
+        ])
+        with open(spec['export_target']) as fd:
+            self.assertEqual('h1 {\n  font-weight: bold; }\n', fd.read())
+
     def test_artifact_runtime_entry_point_integration(self):
         stub_stdouts(self)
         registry = get_registry('calmjs.artifacts')

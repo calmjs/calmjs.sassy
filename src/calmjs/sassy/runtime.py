@@ -8,6 +8,7 @@ from calmjs.sassy.dist import sourcepath_methods_map
 from calmjs.sassy.dist import module_registry_methods
 from calmjs.sassy.cli import libsass_toolchain
 from calmjs.sassy.cli import create_spec
+from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINT_NAME
 
 
 class ScssRuntime(SourcePackageToolchainRuntime):
@@ -69,6 +70,14 @@ class ScssRuntime(SourcePackageToolchainRuntime):
                  'registries to use for the given packages; default: all',
         )
 
+        argparser.add_argument(
+            '--entry-point-name', default='index',
+            dest=CALMJS_SASSY_ENTRY_POINT_NAME,
+            metavar='<entry_point_name>',
+            help='the name of the entry point to acquire the styling rules '
+                 'from for the input packages; default: index',
+        )
+
     def create_spec(
             self, source_package_names=(), export_target=None,
             working_dir=None,
@@ -76,6 +85,7 @@ class ScssRuntime(SourcePackageToolchainRuntime):
             calmjs_module_registry_names=None,
             source_registry_method='all',
             sourcepath_method='all', bundlepath_method='all',
+            calmjs_sassy_entry_point_name='index',
             toolchain=None, **kwargs):
         """
         Accept all arguments, but also the explicit set of arguments
@@ -92,6 +102,7 @@ class ScssRuntime(SourcePackageToolchainRuntime):
             source_registry_method=source_registry_method,
             source_registries=calmjs_module_registry_names,
             sourcepath_method=sourcepath_method,
+            calmjs_sassy_entry_point_name=calmjs_sassy_entry_point_name,
         )
 
 
