@@ -74,7 +74,7 @@ install:
   # used to ensure setuptools is updated.
   - pip install -U calmjs
   # bootstrap
-  - python setup.py develop
+  - pip install -e .[libsass]
   # write the full metadata
   - python setup.py egg_info
 script:

@@ -13,7 +13,7 @@ install:
   - "venv\\Scripts\\activate.bat"
   - pip install coverage
   - pip install -U calmjs
-  - python setup.py develop
+  - pip install -e .[libsass]
   - python setup.py egg_info
 
 test_script:
