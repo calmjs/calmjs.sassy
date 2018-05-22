@@ -12,8 +12,10 @@ try:
     import sass
 except ImportError:  # pragma: no cover
     HAS_LIBSASS = False
+    LIBSASS_VALID_OUTPUT_STYLES = []
 else:  # pragma: no cover
     HAS_LIBSASS = True
+    LIBSASS_VALID_OUTPUT_STYLES = sorted(sass.OUTPUT_STYLES)
 
 from calmjs.toolchain import Toolchain
 from calmjs.toolchain import null_transpiler
@@ -39,9 +41,12 @@ CALMJS_SASSY_ENTRY_POINT_NAME = 'calmjs_sassy_entry_point_name'
 CALMJS_SASSY_SOURCEPATH_MERGED = 'calmjs_sassy_sourcepath_merged'
 # the importers for libsass.
 LIBSASS_IMPORTERS = 'libsass_importers'
+# libsass output_style
+LIBSASS_OUTPUT_STYLE = 'libsass_output_style'
 
 # definitions
 CALMJS_SASSY_ENTRY = 'calmjs.sassy'
+LIBSASS_OUTPUT_STYLE_DEFAULT = 'nested'
 
 
 class BaseScssToolchain(Toolchain):
@@ -127,6 +132,8 @@ class LibsassToolchain(BaseScssToolchain):
                 string=source,
                 importers=spec.get(LIBSASS_IMPORTERS, ()),
                 include_paths=[spec[BUILD_DIR]],
+                output_style=spec.get(
+                    LIBSASS_OUTPUT_STYLE, LIBSASS_OUTPUT_STYLE_DEFAULT),
             )
         except ValueError as e:
             # assume this is the case, could/should be sass.CompileError

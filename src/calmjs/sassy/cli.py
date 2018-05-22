@@ -24,6 +24,8 @@ from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINT_NAME
 from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINTS
 from calmjs.sassy.toolchain import CALMJS_SASSY_SOURCEPATH_MERGED
 from calmjs.sassy.toolchain import LIBSASS_IMPORTERS
+from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE
+from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE_DEFAULT
 
 from calmjs.sassy.dist import generate_scss_sourcepaths
 from calmjs.sassy.dist import generate_scss_bundle_sourcepaths
@@ -36,11 +38,13 @@ libsass_toolchain = LibsassToolchain()
 
 def libsass_spec_extras(
         spec,
+        libsass_output_style=LIBSASS_OUTPUT_STYLE_DEFAULT,
         **kw):
     """
     Apply the libsass toolchain specific spec keys
     """
 
+    spec[LIBSASS_OUTPUT_STYLE] = libsass_output_style
     # build the stub importer, if applicable for stubbing out external
     # imports for non-all definitions using the merged mapping
     if spec[CALMJS_SASSY_SOURCEPATH_MERGED]:

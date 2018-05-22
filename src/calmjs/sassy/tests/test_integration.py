@@ -237,6 +237,26 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         self.assertIn('using provided targets ', log)
         self.assertIn("'example/package/index'] as entry points for css", log)
 
+    def test_libsass_compile_all_compact(self):
+        """
+        Execute the toolchain with a spec that might be typically
+        generated.
+        """
+
+        working_dir = mkdtemp(self)
+        with pretty_logging(stream=StringIO()):
+            spec = compile_all(
+                ['example.package'], working_dir=working_dir,
+                libsass_output_style='compact',
+            )
+        export_target = spec['export_target']
+        self.assertEqual(
+            export_target, join(working_dir, 'example.package.css'))
+        self.assertTrue(exists(export_target))
+        with open(export_target) as fd:
+            self.assertEqual(
+                'body { background-color: #f00; }\n', fd.read())
+
     def test_no_such_package(self):
         with pretty_logging(stream=StringIO()) as stream:
             with self.assertRaises(exc.CalmjsSassyRuntimeError):
@@ -350,6 +370,28 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         with open(spec['export_target']) as fd:
             self.assertEqual(
                 'body {\n  background-color: #f00; }\n', fd.read())
+
+    def test_runtime_compressed_output(self):
+        """
+        Test the runtime integration.
+        """
+
+        stub_stdouts(self)
+        working_dir = mkdtemp(self)
+        spec = libsass_runtime([
+            'example.package', '-vv',
+            '--working-dir', working_dir,
+            '--style', 'compressed',
+        ])
+        log = sys.stderr.getvalue().replace("u'", "'")
+        self.assertIn(
+            "DEBUG calmjs.sassy.toolchain wrote entry point module that will "
+            "import from the following: ['example/package/index']",
+            log)
+        self.assertIn("wrote export css file at", log)
+        with open(spec['export_target']) as fd:
+            self.assertEqual(
+                'body{background-color:red}\n', fd.read())
 
     def test_runtime_integration_failure(self):
         stub_stdouts(self)

@@ -9,6 +9,9 @@ from calmjs.sassy.dist import module_registry_methods
 from calmjs.sassy.cli import libsass_toolchain
 from calmjs.sassy.cli import create_spec
 from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINT_NAME
+from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE
+from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE_DEFAULT
+from calmjs.sassy.toolchain import LIBSASS_VALID_OUTPUT_STYLES
 
 
 class ScssRuntime(SourcePackageToolchainRuntime):
@@ -103,7 +106,32 @@ class ScssRuntime(SourcePackageToolchainRuntime):
             source_registries=calmjs_module_registry_names,
             sourcepath_method=sourcepath_method,
             calmjs_sassy_entry_point_name=calmjs_sassy_entry_point_name,
+            **kwargs
         )
 
 
-libsass_runtime = ScssRuntime(libsass_toolchain)
+class LibsassRuntime(ScssRuntime):
+    """
+    Provide additional arguments useful for libsass integration.
+    """
+
+    def __init__(
+            self, toolchain,
+            description='calmjs scss bundler tool (libsass on *.scss)',
+            *a, **kw):
+        super(LibsassRuntime, self).__init__(
+            toolchain, description=description, *a, **kw)
+
+    def init_argparser(self, argparser):
+        super(LibsassRuntime, self).init_argparser(argparser)
+
+        argparser.add_argument(
+            '-t', '--style', default=LIBSASS_OUTPUT_STYLE_DEFAULT,
+            dest=LIBSASS_OUTPUT_STYLE,
+            choices=LIBSASS_VALID_OUTPUT_STYLES,
+            help='coding style of the compiled result; default: %s' % (
+                LIBSASS_OUTPUT_STYLE_DEFAULT),
+        )
+
+
+libsass_runtime = LibsassRuntime(libsass_toolchain)
