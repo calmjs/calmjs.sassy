@@ -20,6 +20,7 @@ from calmjs.toolchain import spec_update_sourcepath_filter_loaderplugins
 
 from calmjs.sassy.toolchain import libsass_import_stub_generator
 from calmjs.sassy.toolchain import LibsassToolchain
+from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINT_NAME
 from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINTS
 from calmjs.sassy.toolchain import CALMJS_SASSY_SOURCEPATH_MERGED
 from calmjs.sassy.toolchain import LIBSASS_IMPORTERS
@@ -38,6 +39,7 @@ def create_spec(
         source_registry_method='all', source_registries=None,
         sourcepath_method='all',
         bundlepath_method='all',
+        calmjs_sassy_entry_point_name='index',
         calmjs_sassy_entry_points=None,
         toolchain=libsass_toolchain,
         ):
@@ -116,15 +118,33 @@ def create_spec(
 
         Defaults to 'all'.
 
+    calmjs_sassy_entry_point_name
+        The name for the main entry point.  This is the module name that
+        will be searched for in each of the modules.
+
+        Defaults to 'index'.
+
     calmjs_sassy_entry_points
         The scss module names that will be used as the entry points to
         link the scss rules provided in the build directory.  If None
-        are provided, the index.scss files provided by the input
-        packages will be used.
+        are provided, a entry_point_filename will be derived from the
+        calmjs_sassy_entry_point_name and the toolchain.filename_suffix
+        which will then be used to source the entry points from the
+        provided packages specified by package_name
 
     toolchain
         The Toolchain class this spec is targetted for.  Default to the
-        default libsass_toolchain instance.
+        default libsass_toolchain instance.  Note that attributes
+        provided by this instance will be used for certain default
+        parameters.
+
+        filename_suffix
+            Will be joined with calmjs_sassy_entry_point_name to
+            acquire the file name for the entry point, if the specific
+            entry points are not provided by calmjs_sassy_entry_points.
+        join_cwd
+            Function will be called to acquire the working directory,
+            if working_dir is not provided.
 
     """
 
@@ -167,6 +187,7 @@ def create_spec(
 
     spec[BUILD_DIR] = build_dir
     spec[CALMJS_MODULE_REGISTRY_NAMES] = source_registries
+    spec[CALMJS_SASSY_ENTRY_POINT_NAME] = calmjs_sassy_entry_point_name
     spec[EXPORT_TARGET] = export_target
     spec[SOURCE_PACKAGE_NAMES] = package_names
     spec[WORKING_DIR] = working_dir
@@ -218,15 +239,16 @@ def create_spec(
     else:
         # There duplicates the above call, but this is done to avoid
         # making any assumptions about what module name formats are
-        # being used.  The goal is to find all index.scss which are
-        # assumed to be the entry points for the styling rules defined
-        # specific for this given package.
+        # being used.  The goal is to find the entry point from the
+        # provided packages.
+        entry_point_filename = (
+            calmjs_sassy_entry_point_name + toolchain.filename_suffix)
         spec[CALMJS_SASSY_ENTRY_POINTS] = [
             modname for modname, sourcepath in generate_scss_sourcepaths(
                 package_names=package_names,
                 registries=source_registries,
                 method='explicit',
-            ).items() if basename(sourcepath) == 'index.scss'
+            ).items() if basename(sourcepath) == entry_point_filename
         ]
         logger.debug(
             'using derived .scss targets %r as entry points for css '
@@ -241,6 +263,7 @@ def compile_all(
         source_registry_method='all', source_registries=None,
         sourcepath_method='all', bundlepath_method='all',
         calmjs_sassy_entry_points=None,
+        calmjs_sassy_entry_point_name='index',
         toolchain=libsass_toolchain):
     """
     Invoke the scss compilation through the provided toolchain class to
@@ -270,6 +293,7 @@ def compile_all(
         sourcepath_method=sourcepath_method,
         bundlepath_method=bundlepath_method,
         calmjs_sassy_entry_points=calmjs_sassy_entry_points,
+        calmjs_sassy_entry_point_name=calmjs_sassy_entry_point_name,
         toolchain=toolchain,
     )
     toolchain(spec)

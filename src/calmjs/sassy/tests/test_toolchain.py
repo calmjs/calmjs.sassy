@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 import unittest
+import os
+from os.path import join
 
 from calmjs.utils import pretty_logging
 from calmjs.toolchain import Spec
@@ -25,6 +27,53 @@ class BaseToolchainTestCase(unittest.TestCase):
                 build_dir=mkdtemp(self),
             )
             libsass(spec)
+
+    def test_assemble_minimum_information(self):
+        stub_item_attr_value(self, toolchain, 'HAS_LIBSASS', True)
+        working_dir = mkdtemp(self)
+        os.mkdir(join(working_dir, 'package'))
+        demo_scss = join(working_dir, 'package', 'demo.scss')
+
+        with open(demo_scss, 'w') as fd:
+            fd.write('body { color: #000; }')
+
+        libsass = toolchain.LibsassToolchain()
+        spec = Spec(
+            transpile_sourcepath={'demo': demo_scss},
+            bundle_sourcepath={},
+            build_dir=mkdtemp(self),
+            calmjs_sassy_entry_points=['package/demo'],
+        )
+        libsass.prepare(spec)
+        libsass.compile(spec)
+        libsass.assemble(spec)
+
+        with open(join(spec['build_dir'], 'calmjs.sassy.scss')) as fd:
+            self.assertEqual('@import "package/demo";\n', fd.read())
+
+    def test_assemble_with_entry_point_name(self):
+        stub_item_attr_value(self, toolchain, 'HAS_LIBSASS', True)
+        working_dir = mkdtemp(self)
+        os.mkdir(join(working_dir, 'package'))
+        index_scss = join(working_dir, 'package', 'index.scss')
+
+        with open(index_scss, 'w') as fd:
+            fd.write('body { color: #000; }')
+
+        libsass = toolchain.LibsassToolchain()
+        spec = Spec(
+            transpile_sourcepath={'index': index_scss},
+            bundle_sourcepath={},
+            build_dir=mkdtemp(self),
+            calmjs_sassy_entry_points=['package/index'],
+            calmjs_sassy_entry_point_name='index',
+        )
+        libsass.prepare(spec)
+        libsass.compile(spec)
+        libsass.assemble(spec)
+
+        with open(join(spec['build_dir'], 'index.scss')) as fd:
+            self.assertEqual('@import "package/index";\n', fd.read())
 
 
 class StubImporterTestCase(unittest.TestCase):

@@ -164,13 +164,45 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             'example/package/colors': 'example/package/colors.scss',
             'example/package/index': 'example/package/index.scss',
         }, spec['transpiled_targetpaths'])
-        # need to actually integrate libsass
 
         self.assertTrue(exists(export_target))
         with open(export_target) as fd:
             # the definition in colors.scss will be merged in.
             self.assertEqual(
                 'body {\n  background-color: #f00; }\n', fd.read())
+
+        self.assertIn("automatically picked registries", stream.getvalue())
+        self.assertIn("'calmjs.scss'] for sourcepaths", stream.getvalue())
+
+    def test_libsass_compile_all_explicit_entry_point(self):
+        """
+        Execute the toolchain with a spec that might be typically
+        generated.
+        """
+
+        working_dir = mkdtemp(self)
+        with pretty_logging(stream=StringIO()) as stream:
+            spec = compile_all(
+                ['example.usage'], working_dir=working_dir,
+                calmjs_sassy_entry_point_name='extras',
+            )
+        export_target = spec['export_target']
+        self.assertEqual(
+            export_target, join(working_dir, 'example.usage.css'))
+        # check that the toolchain was invoked to "transpile" scss.
+        self.assertEqual({
+            # everything up the dependency graph is indiscriminately
+            # copied.
+            'example/package/colors': 'example/package/colors.scss',
+            'example/package/index': 'example/package/index.scss',
+            'example/usage/extras': 'example/usage/extras.scss',
+            'example/usage/index': 'example/usage/index.scss',
+        }, spec['transpiled_targetpaths'])
+
+        self.assertTrue(exists(export_target))
+        with open(export_target) as fd:
+            # only the standalone extras.scss file will be used, however
+            self.assertEqual('h1 {\n  font-weight: bold; }\n', fd.read())
 
         self.assertIn("automatically picked registries", stream.getvalue())
         self.assertIn("'calmjs.scss'] for sourcepaths", stream.getvalue())
