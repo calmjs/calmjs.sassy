@@ -73,14 +73,6 @@ class BaseScssToolchain(Toolchain):
         return self.simple_transpile_modname_source_target(
             spec, modname, source, target)
 
-    def prepare(self, spec):
-        """
-        Simply check if the libsass was found by this module.
-        """
-
-        if not HAS_LIBSASS:
-            raise CalmjsSassyRuntimeError('the libsass package is not found.')
-
     def assemble(self, spec):
         """
         Since only thing need to be done was to bring the SCSS file into
@@ -110,6 +102,15 @@ class LibsassToolchain(BaseScssToolchain):
     """
     The libsass toolchain.
     """
+
+    def prepare(self, spec):
+        """
+        Simply check if the libsass package is available, as it is
+        required for this toolchain.
+        """
+
+        if not HAS_LIBSASS:
+            raise CalmjsSassyRuntimeError("missing required package 'libsass'")
 
     def link(self, spec):
         """
