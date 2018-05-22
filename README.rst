@@ -181,6 +181,10 @@ under the section `Export JavaScript code from Python packages`__.
 
 .. __: https://pypi.python.org/pypi/calmjs/#export-javascript-code-from-python-packages
 
+The default runtime also exposes a number of tunable features as flags
+that are documented below; the specifics may be found by running
+``calmjs scss --help``.
+
 Declaring SCSS files to export for a given Python package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -234,20 +238,28 @@ contain the following:
         """,
     )
 
-Ensuring the CSS is structured in the supported manner for reuse
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ensure the SCSS is structured in the supported manner for reuse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For proper generation of the resulting ``.css`` and the management of
 the ``.scss`` usage and exports, the default |libsass-python| toolchain
 imposes a small number of fixed constraints when default settings are
-used.  The main constraint is that only the ``index.scss`` is used per
-specified package(s) as the entry point(s) for the generation of the
-stylesheet artifact.  In essence, this allow the package to create an
-artifact with just the explicit imports and styling rules defined within
-it, while allowing their dependants to reuse certain styling rules that
-the package(s) may have declared in other ``.scss`` modules.  This
-allows a more minimum stylesheet to be generated for all packages that
-make use of this system.
+used.  The main constraint is that a specific entry point file must be
+declared to be used to acquire the styling rules for the specified
+packages for the generation of the stylesheet artifact(s).  This
+parameter typically defaults to ``index.scss``, but this may be
+specified to a different value to generate different styling rules, for
+example for usage with different application end points.
+
+In essence, this allow the package to create an artifact with just the
+explicit imports and styling rules defined within it, while exporting
+the rules it defines to their dependants piecemeal so that they may be
+able to import them using the similar package namespace and module
+names.  This enables general communication of exports and reusability of
+those styling rules without forcing dependants to explicitly declare
+their required styles multiple times (i.e. only the ``@import``
+statement is needed in the stylesheet itself, and no need to declare
+an explicit entry against something outside the package).
 
 For example, inside an ``example.package`` there may be this layout::
 
@@ -266,7 +278,16 @@ For example, inside an ``example.package`` there may be this layout::
     │       └── widget.js
     └── setup.py
 
-Note that the ``index.scss`` for this package may contain the following:
+The entry point declaration to export the ``.scss`` files within the
+example package will be this:
+
+.. code:: ini
+
+    [calmjs.scss]
+    example.package = example.package
+
+Note that the ``index.scss`` (the default entry point name) for this
+package may contain the following:
 
 .. code:: css
 
@@ -275,8 +296,37 @@ Note that the ``index.scss`` for this package may contain the following:
     @import "example/package/ui";
 
 Which are simply imports of all the ``.scss`` modules provided by the
-package itself.  For a package that depends on ``example.package``, it
-may have an ``index.scss`` that contain the following:
+package itself.  For an ``example.dependant`` package that depends on
+``example.package`` and exports their own styling rules, it will need
+to declare its dependency through the ``install_requires`` keyword in
+its ``setup.py`` and declare the following entry point to expose the
+styles defined:
+
+.. code:: ini
+
+    [calmjs.scss]
+    example.dependant = example.dependant
+
+Putting it all together:
+
+.. code:: python
+
+    setup(
+        name='example.dependant',
+        install_requires=[
+            'example.package',
+            # ... plus other dependencies
+        ],
+        entry_points="""
+        [calmjs.scss]
+        example.dependant = example.dependant
+        """,
+        # ... plus other declarations
+    )
+
+Note that the entry specific to its dependency ``example.package`` is
+already declared already by that package.  For the main entry point
+``index.scss`` of ``example.dependant``, it may contain the following:
 
 .. code:: css
 
@@ -284,14 +334,15 @@ may have an ``index.scss`` that contain the following:
     @import "example/dependant/full_ui";
     @import "example/package/form";
 
-In the ``index.scss`` provided by the ``example.dependant`` package, it
-included only the ``form.scss`` exported by the ``example.package``,
-while omitting the inclusion of ``colors.scss`` and ``ui.scss`` as it
-could clash with the definitions required and implemented by the other
-styles it shipped.  Other dependants of this ``example.dependant``
-package may then declare usage of any of these exported styles as per
-their owners' preferences.  This is one method to provide extensible
-styles that are reusable in a piecemeal manner by package dependants.
+In this example, only the ``form.scss`` styles exported by the
+``example.package`` was included, while omitting ``colors.scss`` and
+``ui.scss`` as it could clash with the definitions required and
+implemented by the other styles it shipped in that dependant package
+(e.g. ``colors`` and ``full_ui``).  Other dependants of this
+``example.dependant`` package may then declare usage of any of these
+exported styles as per their owners' preferences.  This is one method to
+provide extensible styles that are reusable in a piecemeal manner by
+package dependants.
 
 Naturally, there are parameters to specify entry points other than
 ``index.scss`` for a given package, if necessary (for example, multiple
@@ -335,7 +386,7 @@ dependency is simply:
     @import "bootstrap/nav";
     @import "bootstrap/navbar";
 
-Would work seemlessly, much like the usage of JavaScript code.
+Would work seamlessly, much like the usage of JavaScript code.
 
 Complete artifacts from ``npm`` may also be explicitly specified to
 export under a specific identifier.
@@ -350,7 +401,13 @@ specifying an entry in the ``calmjs.artifacts`` registry, with the key
 being the filename of the artifact and the value being the import
 location to a builder.  A default builder function provided at
 ``calmjs.sassy.artifact:complete_css`` will enable the generation
-of a complete stylesheet, based on the default toolchain and settings:
+of a complete stylesheet, based on the default toolchain and settings,
+with ``calmjs.sassy.artifact:complete_compressed_css`` provide a spec
+that will produced compressed style output.  Note that both these
+builders make use of the ``libsass-python`` toolchain.
+
+An example entry point configuration that only produce the complete css
+artifact (without compression):
 
 .. code:: ini
 
@@ -366,7 +423,10 @@ Alternatively, for solution more integrated with ``setuptools``, the
 ``build_calmjs_artifacts`` flag such that ``setup.py build`` will also
 trigger the building process.  This is useful for automatically
 generating and including the artifact as part of the wheel building
-process.  Consider this ``setup.py``:
+process.
+
+A more complete definition that generates both form of the artifacts may
+look like the following ``setup.py``:
 
 .. code:: Python
 
@@ -381,6 +441,7 @@ process.  Consider this ``setup.py``:
 
         [calmjs.artifacts]
         example.bundle.css = calmjs.sassy.artifact:complete_css
+        example.bundle.min.css = calmjs.sassy.artifact:complete_compressed_css
         """,
         # ... other required fields truncated
     )
@@ -390,7 +451,30 @@ Building the wheel using ``setup.py`` may result in something like this.
 .. code::
 
     $ python setup.py bdist_wheel
+    automatically picked registries ['calmjs.scss'] for sourcepaths
     ...
+    invoking 'sass.compile' on entry point module at '/tmp/tmpwb5bhmd0/build'
+    wrote export css file at '/home/user/example.package/src/example.package.egg-info/calmjs_artifacts/example.bundle.css'
+    installing to build/bdist.linux-x86_64/wheel
+    ...
+
+With both ``example.bundle.css`` and ``example.bundle.min.css``
+available under the ``calmjs_artifacts`` sub-directory inside the
+package metadata directory inside the Python wheel that was generated.
+
+Also note that the default builder specifies ``index`` as the default
+entry point.  If other ones need to be provided or other options are
+required, simply create a new builder function that return a ``Spec``
+object with the desired values.
+
+The end result is that end-users of this package will be able to make
+use of the complete features provided without having to go through a
+separate build step, while retaining the ability for regenerating all
+the required artifacts with just the build dependencies installed,
+without having to further acquire the original configuration files (or
+even the source files) from the original repository that are required
+for the production of these artifacts as they are part of the package
+(provided that the original sources are also packaged into the wheel).
 
 
 Troubleshooting
