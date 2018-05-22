@@ -34,6 +34,28 @@ logger = logging.getLogger(__name__)
 libsass_toolchain = LibsassToolchain()
 
 
+def libsass_spec_extras(
+        spec,
+        **kw):
+    """
+    Apply the libsass toolchain specific spec keys
+    """
+
+    # build the stub importer, if applicable for stubbing out external
+    # imports for non-all definitions using the merged mapping
+    if spec[CALMJS_SASSY_SOURCEPATH_MERGED]:
+        spec[LIBSASS_IMPORTERS] = list(chain(
+            spec.get(LIBSASS_IMPORTERS, []),
+            [(0, libsass_import_stub_generator(spec))],
+        ))
+    return spec
+
+
+_implementation_extras = [
+    (LibsassToolchain, libsass_spec_extras),
+]
+
+
 def create_spec(
         package_names, export_target=None, working_dir=None, build_dir=None,
         source_registry_method='all', source_registries=None,
@@ -42,10 +64,12 @@ def create_spec(
         calmjs_sassy_entry_point_name='index',
         calmjs_sassy_entry_points=None,
         toolchain=libsass_toolchain,
-        ):
+        **kw):
     """
     Produce a spec for the compilation through any BaseScssToolchain
-    subclasses that have implemented the correct interfaces.
+    subclasses that have implemented the correct interfaces, with extra
+    features and keys generated if a supported implementation was
+    provided.
 
     Arguments:
 
@@ -206,9 +230,8 @@ def create_spec(
             method=bundlepath_method,
         ), 'bundle_sourcepath')
 
-    # build the stub importer, if applicable for stubbing out external
-    # imports for non-all definitions
-    # need one that merges all sources for sourcepaths
+    # need one that merges all sources for sourcepaths to declare all
+    # the available paths to stub just the provided sources.
     spec[CALMJS_SASSY_SOURCEPATH_MERGED] = {}
     if sourcepath_method != 'all':
         spec[CALMJS_SASSY_SOURCEPATH_MERGED].update(generate_scss_sourcepaths(
@@ -223,11 +246,6 @@ def create_spec(
             package_names=package_names,
             working_dir=working_dir,
             method='all',
-        ))
-    if spec[CALMJS_SASSY_SOURCEPATH_MERGED]:
-        spec[LIBSASS_IMPORTERS] = list(chain(
-            spec.get(LIBSASS_IMPORTERS, []),
-            [(0, libsass_import_stub_generator(spec))],
         ))
 
     if calmjs_sassy_entry_points:
@@ -255,6 +273,10 @@ def create_spec(
             'generation', spec[CALMJS_SASSY_ENTRY_POINTS],
         )
 
+    for cls, f in _implementation_extras:
+        if isinstance(toolchain, cls):
+            f(spec, **kw)
+
     return spec
 
 
@@ -264,7 +286,8 @@ def compile_all(
         sourcepath_method='all', bundlepath_method='all',
         calmjs_sassy_entry_points=None,
         calmjs_sassy_entry_point_name='index',
-        toolchain=libsass_toolchain):
+        toolchain=libsass_toolchain,
+        **kw):
     """
     Invoke the scss compilation through the provided toolchain class to
     generate a CSS file containing all the styling rules defined by the
@@ -295,6 +318,7 @@ def compile_all(
         calmjs_sassy_entry_points=calmjs_sassy_entry_points,
         calmjs_sassy_entry_point_name=calmjs_sassy_entry_point_name,
         toolchain=toolchain,
+        **kw
     )
     toolchain(spec)
     return spec
