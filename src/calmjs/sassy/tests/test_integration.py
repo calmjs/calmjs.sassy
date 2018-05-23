@@ -13,10 +13,11 @@ from calmjs.toolchain import Spec
 from calmjs.runtime import main
 from calmjs.registry import get as get_registry
 
-from calmjs.sassy import toolchain
+from calmjs.sassy import libsass
 from calmjs.sassy.cli import compile_all
 from calmjs.sassy import exc
-from calmjs.sassy.runtime import libsass_runtime
+
+from calmjs.sassy import libsass_runtime
 
 from calmjs.testing.mocks import StringIO
 from calmjs.testing.utils import mkdtemp
@@ -27,7 +28,7 @@ from calmjs.sassy.testing.utils import teardown_class_integration_environment
 
 
 @unittest.skipIf(
-    not toolchain.HAS_LIBSASS, "'libsass' package is not installed")
+    not libsass.HAS_LIBSASS, "'libsass' package is not installed")
 class ToolchainIntegrationTestCase(unittest.TestCase):
     """
     Test out the full toolchain, involving webpack completely.
@@ -67,7 +68,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         }
         bundle_sourcepath = {}
         export_target = join(bundle_dir, 'example.package.css')
-        libsass = toolchain.LibsassToolchain()
+        toolchain = libsass.LibsassToolchain()
         spec = Spec(
             transpile_sourcepath=transpile_sourcepath,
             bundle_sourcepath=bundle_sourcepath,
@@ -75,7 +76,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             build_dir=build_dir,
             calmjs_sassy_entry_points=('example/package/colors',),
         )
-        libsass(spec)
+        toolchain(spec)
         self.assertEqual({
             'example/package/colors': 'example/package/colors.scss',
         }, spec['transpiled_targetpaths'])
@@ -102,7 +103,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
         }
         bundle_sourcepath = {}
         export_target = join(bundle_dir, 'example.package.css')
-        libsass = toolchain.LibsassToolchain()
+        toolchain = libsass.LibsassToolchain()
         spec = Spec(
             transpile_sourcepath=transpile_sourcepath,
             bundle_sourcepath=bundle_sourcepath,
@@ -110,7 +111,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             build_dir=build_dir,
             calmjs_sassy_entry_points=('example/package/index',),
         )
-        libsass(spec)
+        toolchain(spec)
         self.assertEqual({
             'example/package/colors': 'example/package/colors.scss',
             'example/package/index': 'example/package/index.scss',
@@ -136,7 +137,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             'example/package/malformed': malformed_scss,
         }
         export_target = join(bundle_dir, 'example.package.css')
-        libsass = toolchain.LibsassToolchain()
+        toolchain = libsass.LibsassToolchain()
         spec = Spec(
             transpile_sourcepath=transpile_sourcepath,
             bundle_sourcepath={},
@@ -145,7 +146,7 @@ class ToolchainIntegrationTestCase(unittest.TestCase):
             calmjs_sassy_entry_points=('example/package/malformed',),
         )
         with self.assertRaises(exc.CalmjsSassyRuntimeError):
-            libsass(spec)
+            toolchain(spec)
 
     def test_libsass_compile_all(self):
         """

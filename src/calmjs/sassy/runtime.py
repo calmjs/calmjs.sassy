@@ -6,12 +6,8 @@ Runtime for toolchain
 from calmjs.runtime import SourcePackageToolchainRuntime
 from calmjs.sassy.dist import sourcepath_methods_map
 from calmjs.sassy.dist import module_registry_methods
-from calmjs.sassy.cli import libsass_toolchain
 from calmjs.sassy.cli import create_spec
 from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINT_NAME
-from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE
-from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE_DEFAULT
-from calmjs.sassy.toolchain import LIBSASS_VALID_OUTPUT_STYLES
 
 
 class ScssRuntime(SourcePackageToolchainRuntime):
@@ -89,7 +85,7 @@ class ScssRuntime(SourcePackageToolchainRuntime):
             source_registry_method='all',
             sourcepath_method='all', bundlepath_method='all',
             calmjs_sassy_entry_point_name='index',
-            toolchain=None, **kwargs):
+            **kwargs):
         """
         Accept all arguments, but also the explicit set of arguments
         that get passed down onto the toolchain.
@@ -106,6 +102,7 @@ class ScssRuntime(SourcePackageToolchainRuntime):
             source_registries=calmjs_module_registry_names,
             sourcepath_method=sourcepath_method,
             calmjs_sassy_entry_point_name=calmjs_sassy_entry_point_name,
+            toolchain=self.cli_driver,
             **kwargs
         )
 
@@ -125,6 +122,10 @@ class LibsassRuntime(ScssRuntime):
     def init_argparser(self, argparser):
         super(LibsassRuntime, self).init_argparser(argparser)
 
+        from calmjs.sassy.libsass import LIBSASS_OUTPUT_STYLE
+        from calmjs.sassy.libsass import LIBSASS_OUTPUT_STYLE_DEFAULT
+        from calmjs.sassy.libsass import LIBSASS_VALID_OUTPUT_STYLES
+
         argparser.add_argument(
             '-t', '--style', default=LIBSASS_OUTPUT_STYLE_DEFAULT,
             dest=LIBSASS_OUTPUT_STYLE,
@@ -132,6 +133,3 @@ class LibsassRuntime(ScssRuntime):
             help='coding style of the compiled result; default: %s' % (
                 LIBSASS_OUTPUT_STYLE_DEFAULT),
         )
-
-
-libsass_runtime = LibsassRuntime(libsass_toolchain)

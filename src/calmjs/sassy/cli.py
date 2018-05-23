@@ -3,7 +3,6 @@
 Lower level API for creating linkage with an scss implementation.
 """
 
-from itertools import chain
 from os.path import basename
 from os.path import join
 from os.path import realpath
@@ -18,42 +17,20 @@ from calmjs.toolchain import CALMJS_MODULE_REGISTRY_NAMES
 from calmjs.toolchain import WORKING_DIR
 from calmjs.toolchain import spec_update_sourcepath_filter_loaderplugins
 
-from calmjs.sassy.toolchain import libsass_import_stub_generator
-from calmjs.sassy.toolchain import LibsassToolchain
 from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINT_NAME
 from calmjs.sassy.toolchain import CALMJS_SASSY_ENTRY_POINTS
 from calmjs.sassy.toolchain import CALMJS_SASSY_SOURCEPATH_MERGED
-from calmjs.sassy.toolchain import LIBSASS_IMPORTERS
-from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE
-from calmjs.sassy.toolchain import LIBSASS_OUTPUT_STYLE_DEFAULT
 
 from calmjs.sassy.dist import generate_scss_sourcepaths
 from calmjs.sassy.dist import generate_scss_bundle_sourcepaths
 from calmjs.sassy.dist import get_calmjs_scss_module_registry_for
 
+from calmjs.sassy.libsass import libsass_spec_extras
+from calmjs.sassy.libsass import LibsassToolchain
+
 logger = logging.getLogger(__name__)
 
 libsass_toolchain = LibsassToolchain()
-
-
-def libsass_spec_extras(
-        spec,
-        libsass_output_style=LIBSASS_OUTPUT_STYLE_DEFAULT,
-        **kw):
-    """
-    Apply the libsass toolchain specific spec keys
-    """
-
-    spec[LIBSASS_OUTPUT_STYLE] = libsass_output_style
-    # build the stub importer, if applicable for stubbing out external
-    # imports for non-all definitions using the merged mapping
-    if spec[CALMJS_SASSY_SOURCEPATH_MERGED]:
-        spec[LIBSASS_IMPORTERS] = list(chain(
-            spec.get(LIBSASS_IMPORTERS, []),
-            [(0, libsass_import_stub_generator(spec))],
-        ))
-    return spec
-
 
 _implementation_extras = [
     (LibsassToolchain, libsass_spec_extras),
@@ -288,8 +265,8 @@ def compile_all(
         package_names, export_target=None, working_dir=None, build_dir=None,
         source_registry_method='all', source_registries=None,
         sourcepath_method='all', bundlepath_method='all',
-        calmjs_sassy_entry_points=None,
         calmjs_sassy_entry_point_name='index',
+        calmjs_sassy_entry_points=None,
         toolchain=libsass_toolchain,
         **kw):
     """
@@ -300,8 +277,8 @@ def compile_all(
     Arguments:
 
     toolchain
-        The toolchain instance to use.  Default is the instance in this
-        module.
+        The toolchain instance to use.  Default is an instance of the
+        libsass toolchain.
 
     For other arguments, please refer to create_spec as they are passed
     to it.
@@ -319,8 +296,8 @@ def compile_all(
         source_registries=source_registries,
         sourcepath_method=sourcepath_method,
         bundlepath_method=bundlepath_method,
-        calmjs_sassy_entry_points=calmjs_sassy_entry_points,
         calmjs_sassy_entry_point_name=calmjs_sassy_entry_point_name,
+        calmjs_sassy_entry_points=calmjs_sassy_entry_points,
         toolchain=toolchain,
         **kw
     )
