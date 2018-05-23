@@ -6,7 +6,9 @@ Toolchain for building Sassy CSS into CSS.
 from __future__ import unicode_literals
 
 import logging
+import os
 from os.path import join
+from os.path import dirname
 
 try:
     import sass
@@ -46,6 +48,7 @@ LIBSASS_OUTPUT_STYLE = 'libsass_output_style'
 
 # definitions
 CALMJS_SASSY_ENTRY = 'calmjs.sassy'
+CALMJS_SASSY_ASSEMBLE_SUBDIR = '__calmjs_sassy__'
 LIBSASS_OUTPUT_STYLE_DEFAULT = 'nested'
 
 
@@ -83,10 +86,11 @@ class BaseScssToolchain(Toolchain):
         """
 
         spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE] = join(
-            spec[BUILD_DIR], spec.get(
+            spec[BUILD_DIR], CALMJS_SASSY_ASSEMBLE_SUBDIR, spec.get(
                 CALMJS_SASSY_ENTRY_POINT_NAME, CALMJS_SASSY_ENTRY
             )
         ) + self.filename_suffix
+        os.makedirs(dirname(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]))
 
         # writing out this as a file to permit reuse by other tools that
         # work directly with files.

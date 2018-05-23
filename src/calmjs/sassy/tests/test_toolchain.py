@@ -29,7 +29,6 @@ class BaseToolchainTestCase(unittest.TestCase):
             libsass(spec)
 
     def test_assemble_minimum_information(self):
-        stub_item_attr_value(self, toolchain, 'HAS_LIBSASS', True)
         working_dir = mkdtemp(self)
         os.mkdir(join(working_dir, 'package'))
         demo_scss = join(working_dir, 'package', 'demo.scss')
@@ -37,7 +36,7 @@ class BaseToolchainTestCase(unittest.TestCase):
         with open(demo_scss, 'w') as fd:
             fd.write('body { color: #000; }')
 
-        libsass = toolchain.LibsassToolchain()
+        libsass = toolchain.BaseScssToolchain()
         spec = Spec(
             transpile_sourcepath={'demo': demo_scss},
             bundle_sourcepath={},
@@ -48,32 +47,43 @@ class BaseToolchainTestCase(unittest.TestCase):
         libsass.compile(spec)
         libsass.assemble(spec)
 
-        with open(join(spec['build_dir'], 'calmjs.sassy.scss')) as fd:
+        assemble_path = join(
+            spec['build_dir'], '__calmjs_sassy__', 'calmjs.sassy.scss')
+
+        with open(assemble_path) as fd:
             self.assertEqual('@import "package/demo";\n', fd.read())
 
-    def test_assemble_with_entry_point_name(self):
-        stub_item_attr_value(self, toolchain, 'HAS_LIBSASS', True)
+    def test_assemble_with_entry_point_name_not_overwriting(self):
+        # normally an source index.scss being available on the build
+        # dir is unlikely to happen, but this case should be properly
+        # accounted for, which is why a dedicated assemble subdirectory
+        # is provided.
         working_dir = mkdtemp(self)
-        os.mkdir(join(working_dir, 'package'))
-        index_scss = join(working_dir, 'package', 'index.scss')
+        index_scss = join(working_dir, 'index.scss')
 
         with open(index_scss, 'w') as fd:
             fd.write('body { color: #000; }')
 
-        libsass = toolchain.LibsassToolchain()
+        libsass = toolchain.BaseScssToolchain()
         spec = Spec(
-            transpile_sourcepath={'index': index_scss},
-            bundle_sourcepath={},
+            transpile_sourcepath={},
+            bundle_sourcepath={'index': index_scss},
             build_dir=mkdtemp(self),
-            calmjs_sassy_entry_points=['package/index'],
+            calmjs_sassy_entry_points=['index'],
             calmjs_sassy_entry_point_name='index',
         )
         libsass.prepare(spec)
         libsass.compile(spec)
         libsass.assemble(spec)
 
+        assemble_path = join(
+            spec['build_dir'], '__calmjs_sassy__', 'index.scss')
+
+        with open(assemble_path) as fd:
+            self.assertEqual('@import "index";\n', fd.read())
+
         with open(join(spec['build_dir'], 'index.scss')) as fd:
-            self.assertEqual('@import "package/index";\n', fd.read())
+            self.assertEqual('body { color: #000; }', fd.read())
 
 
 class StubImporterTestCase(unittest.TestCase):

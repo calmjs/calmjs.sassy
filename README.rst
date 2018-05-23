@@ -453,7 +453,7 @@ Building the wheel using ``setup.py`` may result in something like this.
     $ python setup.py bdist_wheel
     automatically picked registries ['calmjs.scss'] for sourcepaths
     ...
-    invoking 'sass.compile' on entry point module at '/tmp/tmpwb5bhmd0/build/index.scss'
+    invoking 'sass.compile' on entry point module at '/tmp/tmpwb5bhmd0/build/__calmjs_sassy__/index.scss'
     wrote export css file at '/home/user/example.package/src/example.package.egg-info/calmjs_artifacts/example.bundle.css'
     installing to build/bdist.linux-x86_64/wheel
     ...
