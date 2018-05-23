@@ -90,7 +90,7 @@ dependency may be declared like so in the package's ``setup.py`` file:
     setup(
         ...
         setup_requires=[
-            'calmjs.sassy>=1.0.0,<2',
+            'calmjs.sassy[libsass]>=1.0.0,<2',
             # plus other packages required for generating the package.
         ],
         install_requires=[
