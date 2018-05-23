@@ -10,12 +10,12 @@ reuse of styling rules declared by Python packages' dependencies in a
 manner more familiar to users of the given Python environments by
 reusing the same names as the namespaces they may be using.
 
-.. image:: https://travis-ci.org/calmjs/calmjs.sassy.svg?branch=1.0.x
+.. image:: https://travis-ci.org/calmjs/calmjs.sassy.svg?branch=1.0.1
     :target: https://travis-ci.org/calmjs/calmjs.sassy
-.. image:: https://ci.appveyor.com/api/projects/status/1gei512socwe8nho/branch/1.0.x?svg=true
-    :target: https://ci.appveyor.com/project/metatoaster/calmjs-sassy/branch/1.0.x
-.. image:: https://coveralls.io/repos/github/calmjs/calmjs.sassy/badge.svg?branch=1.0.x
-    :target: https://coveralls.io/github/calmjs/calmjs.sassy?branch=1.0.x
+.. image:: https://ci.appveyor.com/api/projects/status/1gei512socwe8nho/branch/1.0.1?svg=true
+    :target: https://ci.appveyor.com/project/metatoaster/calmjs-sassy/branch/1.0.1
+.. image:: https://coveralls.io/repos/github/calmjs/calmjs.sassy/badge.svg?branch=1.0.1
+    :target: https://coveralls.io/github/calmjs/calmjs.sassy?branch=1.0.1
 
 .. |calmjs| replace:: ``calmjs``
 .. |calmjs.rjs| replace:: ``calmjs.rjs``
