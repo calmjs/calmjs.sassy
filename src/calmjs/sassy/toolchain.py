@@ -7,12 +7,15 @@ from __future__ import unicode_literals
 
 import logging
 import os
+from os.path import exists
 from os.path import join
 from os.path import dirname
 
 from calmjs.toolchain import Toolchain
 from calmjs.toolchain import null_transpiler
 from calmjs.toolchain import BUILD_DIR
+
+from calmjs.sassy.exc import CalmjsSassyRuntimeError
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +75,14 @@ class BaseScssToolchain(Toolchain):
                 CALMJS_SASSY_ENTRY_POINT_NAME, CALMJS_SASSY_ENTRY
             )
         ) + self.filename_suffix
-        os.makedirs(dirname(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]))
 
+        if exists(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]):
+            raise CalmjsSassyRuntimeError(
+                "cannot create entry point module at '%s' as it already "
+                "exists" % spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]
+            )
+
+        os.makedirs(dirname(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]))
         # writing out this as a file to permit reuse by other tools that
         # work directly with files.
         with open(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE], 'w') as fd:

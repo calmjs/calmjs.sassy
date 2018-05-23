@@ -250,8 +250,8 @@ def create_spec(
             ).items() if basename(sourcepath) == entry_point_filename
         ]
         logger.debug(
-            'using derived .scss targets %r as entry points for css '
-            'generation', spec[CALMJS_SASSY_ENTRY_POINTS],
+            "using derived '%s' targets %r as entry points for css generation",
+            toolchain.filename_suffix, spec[CALMJS_SASSY_ENTRY_POINTS],
         )
 
     for cls, f in _implementation_extras:
