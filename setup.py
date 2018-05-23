@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
-version = '0.0.0'
+version = '1.0.0'
 
 classifiers = """
-Development Status :: 1 - Planning
+Development Status :: 5 - Production/Stable
 Environment :: Console
 Environment :: Plugins
 Framework :: Setuptools Plugin
@@ -43,7 +43,7 @@ setup(
         'Package for extending the Calmjs framework to support the usage of '
         'sass in a manner that crosses Python package boundaries by exposing '
         'an import system that mimics the package namespaces available '
-        'within the current Python environment.'
+        'within a given Python environment.'
     ),
     long_description=long_description,
     classifiers=classifiers,
@@ -51,7 +51,7 @@ setup(
     author='Tommy Yu',
     author_email='tommy.yu@auckland.ac.nz',
     url='https://github.com/calmjs/calmjs.sassy',
-    license='gpl',
+    license='GPL',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     namespace_packages=['calmjs'],
@@ -84,5 +84,5 @@ setup(
                 'calmjs.sassy.dist:write_module_registry_names'),
         ],
     },
-    # test_suite="calmjs.sassy.tests.make_suite",
+    test_suite="calmjs.sassy.tests.make_suite",
 )
