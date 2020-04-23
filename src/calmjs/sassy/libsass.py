@@ -116,7 +116,7 @@ class LibsassToolchain(BaseScssToolchain):
         # extension and debugging through the serialized form, also to
         # permit alternative integration with tools that read from a
         # file.
-        with open(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]) as fd:
+        with self.opener(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]) as fd:
             source = fd.read()
 
         logger.info(
@@ -136,6 +136,6 @@ class LibsassToolchain(BaseScssToolchain):
             raise CalmjsSassyRuntimeError(
                 'failed to compile with libsass: %s' % e)
 
-        with open(spec[EXPORT_TARGET], 'w') as fd:
+        with self.opener(spec[EXPORT_TARGET], 'w') as fd:
             fd.write(css_export)
         logger.info("wrote export css file at '%s'", spec[EXPORT_TARGET])

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.2 (2020-04-23)
+------------------
+
+- Use ``self.opener`` for writing file manipulation inside toolchain.
+
 1.0.1 (2018-05-23)
 ------------------
 

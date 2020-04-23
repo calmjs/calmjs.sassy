@@ -85,7 +85,7 @@ class BaseScssToolchain(Toolchain):
         os.makedirs(dirname(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE]))
         # writing out this as a file to permit reuse by other tools that
         # work directly with files.
-        with open(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE], 'w') as fd:
+        with self.opener(spec[CALMJS_SASSY_ENTRY_POINT_SOURCEFILE], 'w') as fd:
             for modname in spec[CALMJS_SASSY_ENTRY_POINTS]:
                 fd.write('@import "%s";\n' % modname)
         logger.debug(
